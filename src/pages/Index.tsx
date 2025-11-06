@@ -26,13 +26,18 @@ const FEATURES = [
 ];
 
 const PAYMENT_METHODS = [
-  { name: 'YouMoney', url: 'https://yoomoney.ru/to/+bnDMvX7Ko67VDCR7RJECkb6' },
-  { name: 'YouCassa', url: 'https://yookassa.ru/' },
-  { name: 'PSP', url: 'https://psp.ru/' },
-  { name: 'Sber', url: 'https://www.sberbank.ru/ru/person' },
-  { name: 'TBank', url: 'https://www.tbank.ru/' },
-  { name: 'Крипта', url: 'https://www.binance.com/' }
+  { name: 'YouMoney', url: 'https://yoomoney.ru/to/+bnDMvX7Ko67VDCR7RJECkb6', id: 'yoomoney' },
+  { name: 'YouCassa', url: 'https://yookassa.ru/', id: 'yookassa' },
+  { name: 'PSP', url: 'https://psp.ru/', id: 'psp' },
+  { name: 'Sber', url: 'https://www.sberbank.ru/ru/person', id: 'sber' },
+  { name: 'TBank', url: 'https://www.tbank.ru/', id: 'tbank' },
+  { name: 'Крипта', url: 'https://www.binance.com/', id: 'crypto' }
 ];
+
+const PROMO_CODES: Record<string, number> = {
+  'Release': 0.20,
+  'Delaros': 0.15
+};
 
 export default function Index() {
   const [showRegister, setShowRegister] = useState(false);
@@ -40,10 +45,13 @@ export default function Index() {
   const [showPayment, setShowPayment] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
+  const [selectedPayment, setSelectedPayment] = useState<any>(null);
   const [snowEnabled, setSnowEnabled] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [promoCode, setPromoCode] = useState('');
+  const [discount, setDiscount] = useState(0);
+  const [finalPrice, setFinalPrice] = useState(0);
   const { toast } = useToast();
 
   const [registerForm, setRegisterForm] = useState({ email: '', username: '', password: '' });
@@ -97,10 +105,43 @@ export default function Index() {
     }
   };
 
-  const handlePayment = (method: any) => {
-    window.open(method.url, '_blank');
-    toast({ title: `Переход на ${method.name}`, description: 'Завершите оплату на сайте платёжной системы' });
+  const applyPromoCode = () => {
+    if (PROMO_CODES[promoCode]) {
+      const discountPercent = PROMO_CODES[promoCode] * 100;
+      setDiscount(PROMO_CODES[promoCode]);
+      toast({ title: `Промокод применён!`, description: `Скидка ${discountPercent}%` });
+    } else if (promoCode) {
+      toast({ title: 'Неверный промокод', variant: 'destructive' });
+    }
   };
+
+  const calculateFinalPrice = () => {
+    if (!selectedPlan) return 0;
+    const price = selectedPlan.price;
+    return Math.round(price - (price * discount));
+  };
+
+  const handleSelectPayment = (method: any) => {
+    setSelectedPayment(method);
+  };
+
+  const handleFinalPayment = () => {
+    if (!selectedPayment) {
+      toast({ title: 'Выберите способ оплаты', variant: 'destructive' });
+      return;
+    }
+    const price = calculateFinalPrice();
+    window.open(selectedPayment.url, '_blank');
+    toast({ title: `Переход на ${selectedPayment.name}`, description: `Сумма к оплате: ${price}₽` });
+  };
+
+  useEffect(() => {
+    setFinalPrice(calculateFinalPrice());
+  }, [selectedPlan, discount]);
+
+  useEffect(() => {
+    applyPromoCode();
+  }, [promoCode]);
 
   const openProfile = () => {
     setShowProfile(true);
@@ -272,17 +313,54 @@ export default function Index() {
             <DialogTitle className="text-2xl font-montserrat text-white">Выберите способ оплаты</DialogTitle>
           </DialogHeader>
           <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-4">
-              {PAYMENT_METHODS.map((method, idx) => (
-                <Button key={idx} onClick={() => handlePayment(method)} variant="outline" className="h-16 text-lg border-secondary/50 hover:bg-secondary hover:text-black text-white">
-                  {method.name}
-                </Button>
-              ))}
-            </div>
+            {selectedPlan && (
+              <div className="bg-white/5 rounded-lg p-6 border border-secondary/30">
+                <div className="flex justify-between items-center mb-4">
+                  <div>
+                    <p className="text-white/70 text-sm">Тариф</p>
+                    <p className="text-white text-xl font-montserrat font-bold">{selectedPlan.name}</p>
+                  </div>
+                  <div className="text-right">
+                    {discount > 0 && (
+                      <p className="text-white/50 line-through text-sm">{selectedPlan.price}₽</p>
+                    )}
+                    <p className="text-primary text-3xl font-bold">{finalPrice}₽</p>
+                    {discount > 0 && (
+                      <p className="text-secondary text-sm">-{discount * 100}%</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+            
             <div>
-              <Label className="text-white/70">Промокод (если есть)</Label>
-              <Input value={promoCode} onChange={e => setPromoCode(e.target.value)} className="bg-white/5 border-white/20 text-white" placeholder="Введите промокод" />
+              <Label className="text-white/70 mb-2 block">Промокод (если есть)</Label>
+              <Input value={promoCode} onChange={e => setPromoCode(e.target.value)} className="bg-white/5 border-white/20 text-white" placeholder="Release или Delaros" />
             </div>
+
+            <div>
+              <Label className="text-white text-lg mb-3 block">Выберите способ оплаты</Label>
+              <div className="grid grid-cols-2 gap-4">
+                {PAYMENT_METHODS.map((method, idx) => (
+                  <Button 
+                    key={idx} 
+                    onClick={() => handleSelectPayment(method)} 
+                    variant="outline" 
+                    className={`h-16 text-lg border-secondary/50 hover:bg-secondary hover:text-black text-white transition-all ${selectedPayment?.id === method.id ? 'bg-secondary text-black border-secondary' : ''}`}
+                  >
+                    {method.name}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            <Button 
+              onClick={handleFinalPayment} 
+              disabled={!selectedPayment} 
+              className="w-full bg-primary hover:bg-primary/90 text-white h-14 text-lg font-semibold"
+            >
+              Оплатить {finalPrice}₽
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
