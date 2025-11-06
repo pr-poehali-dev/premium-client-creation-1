@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 
 const API_AUTH = 'https://functions.poehali.dev/46100039-333d-4e3d-a568-053845ff2f33';
 const API_USER = 'https://functions.poehali.dev/7755ca60-4d6b-40bd-92da-d18abfad90ca';
+const API_PAYMENT = 'https://functions.poehali.dev/790e30d8-9938-4758-b0cb-54d042c4bb38';
 
 const PLANS = [
   { name: 'Неделя', price: 100, duration: '7 дней', type: 'week', days: 7 },
@@ -125,14 +126,36 @@ export default function Index() {
     setSelectedPayment(method);
   };
 
-  const handleFinalPayment = () => {
+  const handleFinalPayment = async () => {
     if (!selectedPayment) {
       toast({ title: 'Выберите способ оплаты', variant: 'destructive' });
       return;
     }
+    
     const price = calculateFinalPrice();
-    window.open(selectedPayment.url, '_blank');
-    toast({ title: `Переход на ${selectedPayment.name}`, description: `Сумма к оплате: ${price}₽` });
+    
+    try {
+      const res = await fetch(API_PAYMENT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          payment_method: selectedPayment.id,
+          amount: price,
+          plan_name: selectedPlan.name,
+          user_id: user?.uid || 'guest'
+        })
+      });
+      
+      const data = await res.json();
+      
+      if (data.payment_url) {
+        window.location.href = data.payment_url;
+      } else {
+        toast({ title: 'Ошибка генерации ссылки', variant: 'destructive' });
+      }
+    } catch (error) {
+      toast({ title: 'Ошибка сети', variant: 'destructive' });
+    }
   };
 
   useEffect(() => {

@@ -1,0 +1,27 @@
+{
+  "tests": [
+    {
+      "name": "Test OPTIONS for CORS",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Test payment link generation",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "payment_method": "yoomoney",
+        "amount": 100,
+        "plan_name": "Неделя",
+        "user_id": "1"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "payment_url": "string",
+        "amount": 100
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
