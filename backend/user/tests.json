@@ -1,0 +1,16 @@
+{
+  "tests": [
+    {
+      "name": "Test OPTIONS for CORS",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Test get user info",
+      "method": "GET",
+      "path": "/?uid=test-uid-123",
+      "expectedStatus": 404
+    }
+  ]
+}
