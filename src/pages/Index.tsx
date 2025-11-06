@@ -115,23 +115,30 @@ export default function Index() {
 
   return (
     <div className="min-h-screen bg-black text-primary font-roboto relative overflow-hidden">
+      <div className="fixed inset-0 bg-gradient-to-br from-black via-primary/5 to-black backdrop-blur-sm -z-10" />
       {snowEnabled && (
-        <div className="fixed inset-0 pointer-events-none z-50">
-          {[...Array(50)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute text-white opacity-70"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `-10vh`,
-                animation: `snowfall ${5 + Math.random() * 10}s linear infinite`,
-                animationDelay: `${Math.random() * 5}s`,
-                fontSize: `${10 + Math.random() * 10}px`
-              }}
-            >
-              ❄
-            </div>
-          ))}
+        <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
+          {[...Array(80)].map((_, i) => {
+            const size = 10 + Math.random() * 15;
+            const duration = 8 + Math.random() * 12;
+            const delay = Math.random() * 8;
+            const startX = Math.random() * 100;
+            return (
+              <div
+                key={i}
+                className="absolute animate-snowfall text-white"
+                style={{
+                  left: `${startX}%`,
+                  animationDuration: `${duration}s`,
+                  animationDelay: `${delay}s`,
+                  fontSize: `${size}px`,
+                  opacity: 0.6 + Math.random() * 0.4
+                }}
+              >
+                ❄
+              </div>
+            );
+          })}
         </div>
       )}
 

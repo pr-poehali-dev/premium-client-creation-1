@@ -58,7 +58,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         'body': json.dumps({'error': 'Пользователь уже существует'})
                     }
                 
-                user_uid = str(uuid.uuid4())
+                cursor.execute("SELECT COUNT(*) as count FROM users")
+                count_result = cursor.fetchone()
+                user_uid = str(count_result['count'] + 1)
+                
                 password_hash = hashlib.sha256(password.encode()).hexdigest()
                 
                 cursor.execute(

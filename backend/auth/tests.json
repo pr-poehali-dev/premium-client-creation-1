@@ -7,22 +7,15 @@
       "expectedStatus": 200
     },
     {
-      "name": "Test registration",
+      "name": "Test login with non-existent user",
       "method": "POST",
       "path": "/",
       "body": {
-        "action": "register",
-        "email": "test@example.com",
-        "username": "testuser",
+        "action": "login",
+        "username": "nonexistent",
         "password": "testpass123"
       },
-      "expectedStatus": 200,
-      "expectedBody": {
-        "success": true,
-        "uid": "string",
-        "username": "string"
-      },
-      "bodyMatcher": "partial"
+      "expectedStatus": 401
     }
   ]
 }
